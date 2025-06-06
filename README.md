@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .calculator {
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.5), 
+                        0 0 20px rgba(79, 70, 229, 0.3),
+                        0 0 30px rgba(79, 70, 229, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .calculator:hover {
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.6), 
+                        0 0 25px rgba(79, 70, 229, 0.4),
+                        0 0 35px rgba(79, 70, 229, 0.3);
+        }
+        
+        .btn {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(255, 100, 100, 0.6);
+        }
+        
+        .btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(255, 100, 100, 0.2) 0%, 
+                rgba(255, 200, 100, 0.4) 50%, 
+                rgba(255, 100, 100, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn:hover:before {
+            opacity: 0.8;
+        }
+        
+        .btn-number:hover {
+            box-shadow: 0 0 15px rgba(100, 200, 255, 0.6);
+        }
+        
+        .btn-number:before {
+            background: linear-gradient(45deg, 
+                rgba(100, 150, 255, 0.2) 0%, 
+                rgba(100, 200, 255, 0.4) 50%, 
+                rgba(100, 150, 255, 0.2) 100%);
+        }
+        
+        .btn-operation {
+            background-color: rgba(255, 100, 100, 0.8);
+            color: white;
+            position: relative;
+        }
+        
+        .btn-operation:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, 
+                rgba(255, 50, 50, 0.8), 
+                rgba(255, 150, 50, 0.8), 
+                rgba(255, 50, 50, 0.8));
+            z-index: -1;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-operation:hover:before {
+            opacity: 0.6;
+        }
+        
+        .btn-equals {
+            background: linear-gradient(135deg, #ff5c5c, #ff8c00);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-equals:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            right: -50%;
+            bottom: -50%;
+            background: linear-gradient(
+                to bottom right, 
+                rgba(255,255,255,0) 45%,
+                rgba(255,255,255,0.8) 50%,
+                rgba(255,255,255,0) 55%
+            );
+            transform: rotate(45deg);
+            animation: fireGlint 3s linear infinite;
+            opacity: 0.8;
+        }
+        
+        @keyframes fireGlint {
+            0% {
+                transform: translateX(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) rotate(45deg);
+            }
+        }
+        
+        .display {
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        .power-btn {
+            animation: pulse 2s infinite;
+        }
+        
+        .history-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .history-icon:hover {
+            transform: rotate(45deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
+    <div class="calculator bg-gray-800 rounded-2xl p-6 w-full max-w-md relative overflow-hidden">
+        <!-- Top decorative elements -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500"></div>
+        <div class="flex justify-between items-center mb-4">
+            <div class="power-btn bg-indigo-600 w-3 h-3 rounded-full flex items-center justify-center text-white text-xs">
+                <i class="fas fa-power-off"></i>
+            </div>
+            <div class="text-gray-400 text-sm font-mono">v1.0.0</div>
+            <div class="history-icon text-indigo-400 cursor-pointer">
+                <i class="fas fa-history"></i>
+            </div>
+        </div>
+        
+        <!-- Display -->
+        <div class="display bg-gray-900 rounded-lg p-4 mb-6 font-mono text-right">
+            <div id="previous-operand" class="text-gray-400 text-sm h-4 mb-1"></div>
+            <div id="current-operand" class="text-white text-4xl font-semibold tracking-wider overflow-x-auto whitespace-nowrap">0</div>
+        </div>
+        
+        <!-- Keypad -->
+        <div class="grid grid-cols-4 gap-3">
+            <!-- Row 1 -->
+            <button onclick="clearAll()" class="btn bg-gray-700 text-red-400 hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">AC</button>
+            <button onclick="deleteLastChar()" class="btn bg-gray-700 text-indigo-300 hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">
+                <i class="fas fa-backspace"></i>
+            </button>
+            <button onclick="appendOperation('/')" class="btn btn-operation text-white hover:bg-indigo-700 p-4 rounded-lg text-xl font-medium">/</button>
+            <button onclick="calculatePercentage()" class="btn bg-gray-700 text-indigo-300 hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">%</button>
+            
+            <!-- Row 2 -->
+            <button onclick="appendNumber('7')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">7</button>
+            <button onclick="appendNumber('8')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">8</button>
+            <button onclick="appendNumber('9')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">9</button>
+            <button onclick="appendOperation('*')" class="btn btn-operation text-white hover:bg-indigo-700 p-4 rounded-lg text-xl font-medium">×</button>
+            
+            <!-- Row 3 -->
+            <button onclick="appendNumber('4')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">4</button>
+            <button onclick="appendNumber('5')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">5</button>
+            <button onclick="appendNumber('6')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">6</button>
+            <button onclick="appendOperation('-')" class="btn btn-operation text-white hover:bg-indigo-700 p-4 rounded-lg text-xl font-medium">-</button>
+            
+            <!-- Row 4 -->
+            <button onclick="appendNumber('1')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">1</button>
+            <button onclick="appendNumber('2')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">2</button>
+            <button onclick="appendNumber('3')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">3</button>
+            <button onclick="appendOperation('+')" class="btn btn-operation text-white hover:bg-indigo-700 p-4 rounded-lg text-xl font-medium">+</button>
+            
+            <!-- Row 5 -->
+            <button onclick="appendNumber('0')" class="btn btn-number bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium col-span-2">0</button>
+            <button onclick="appendDecimal()" class="btn bg-gray-700 text-white hover:bg-gray-600 p-4 rounded-lg text-xl font-medium">.</button>
+            <button onclick="compute()" class="btn-equals btn text-white hover:opacity-90 p-4 rounded-lg text-xl font-medium">=</button>
+        </div>
+        
+        <!-- Bottom decorative elements -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+    </div>
+
+    <script>
+        let currentOperand = '0';
+        let previousOperand = '';
+        let operation = undefined;
+        let resetScreen = false;
+        
+        const currentOperandElement = document.getElementById('current-operand');
+        const previousOperandElement = document.getElementById('previous-operand');
+        
+        function updateDisplay() {
+            currentOperandElement.innerText = currentOperand;
+            if (operation != null) {
+                previousOperandElement.innerText = 
+                    `${previousOperand} ${operation}`;
+            } else {
+                previousOperandElement.innerText = '';
+            }
+        }
+        
+        function appendNumber(number) {
+            if (currentOperand === '0' || resetScreen) {
+                currentOperand = number;
+                resetScreen = false;
+            } else {
+                currentOperand += number;
+            }
+            updateDisplay();
+        }
+        
+        function appendDecimal() {
+            if (resetScreen) {
+                currentOperand = '0.';
+                resetScreen = false;
+                updateDisplay();
+                return;
+            }
+            if (currentOperand.includes('.')) return;
+            if (currentOperand === '') {
+                currentOperand = '0.';
+            } else {
+                currentOperand += '.';
+            }
+            updateDisplay();
+        }
+        
+        function appendOperation(op) {
+            if (currentOperand === '') return;
+            if (previousOperand !== '') {
+                compute();
+            }
+            operation = op;
+            previousOperand = currentOperand;
+            currentOperand = '';
+            updateDisplay();
+        }
+        
+        function compute() {
+            let computation;
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            if (isNaN(prev) || isNaN(current)) return;
+            
+            switch (operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    computation = prev / current;
+                    break;
+                default:
+                    return;
+            }
+            
+            currentOperand = computation.toString();
+            operation = undefined;
+            previousOperand = '';
+            resetScreen = true;
+            updateDisplay();
+        }
+        
+        function clearAll() {
+            currentOperand = '0';
+            previousOperand = '';
+            operation = undefined;
+            updateDisplay();
+        }
+        
+        function deleteLastChar() {
+            if (resetScreen) return;
+            if (currentOperand.length === 1) {
+                currentOperand = '0';
+            } else {
+                currentOperand = currentOperand.slice(0, -1);
+            }
+            updateDisplay();
+        }
+        
+        function calculatePercentage() {
+            if (currentOperand === '') return;
+            const value = parseFloat(currentOperand);
+            currentOperand = (value / 100).toString();
+            updateDisplay();
+        }
+        
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+            else if (e.key === '.') appendDecimal();
+            else if (e.key === '=' || e.key === 'Enter') compute();
+            else if (e.key === 'Backspace') deleteLastChar();
+            else if (e.key === 'Escape') clearAll();
+            else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+                appendOperation(e.key);
+            }
+        });
+        
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
